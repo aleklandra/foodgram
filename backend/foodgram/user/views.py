@@ -18,6 +18,7 @@ class CustomUserViewSet(UserViewSet):
     pagination_class = UsersPagination
 
 
+
 @api_view(['PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def set_user_avatar(request):
