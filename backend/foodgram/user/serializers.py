@@ -1,13 +1,11 @@
 """Сериализаторы для работы с пользователем."""
 import base64
-import imghdr
 from collections import OrderedDict
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
-from rest_framework.decorators import action
 from rest_framework.validators import UniqueValidator
-from djoser.serializers import UserCreateSerializer, UserSerializer
+from djoser.serializers import UserSerializer
 
 
 User = get_user_model()
@@ -29,9 +27,10 @@ class Base64ImageField(serializers.ImageField):
 
 class UserAvatarSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=True, use_url=True)
+
     class Meta:
-            model = User
-            fields = ('avatar', )
+        model = User
+        fields = ('avatar', )
     
     def update(self, instance, validated_data):
         instance.avatar = validated_data.get("avatar", instance.avatar)

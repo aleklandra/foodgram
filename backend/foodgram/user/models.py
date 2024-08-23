@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser, UserManager
 
 
 class User(AbstractUser):
@@ -15,7 +15,7 @@ class User(AbstractUser):
     )
     password = models.CharField(max_length=150)
 
-    objects = BaseUserManager()
+    objects = UserManager()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'password']

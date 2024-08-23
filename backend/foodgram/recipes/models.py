@@ -11,6 +11,9 @@ class Tag(models.Model):
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
         ordering = ('name', )
+    
+    def __str__(self):
+        return f'{self.name}'
 
 
 class Ingredient(models.Model):
@@ -22,6 +25,9 @@ class Ingredient(models.Model):
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         ordering = ('name', )
+    
+    def __str__(self):
+        return f'{self.name} {self.measurement_unit}'
 
 
 class Recipe(models.Model):
@@ -50,8 +56,8 @@ class TagRecipe(models.Model):
 
 
 class IngredientRecipe(models.Model):
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='ingredients')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ingredientsres')
     amount = models.IntegerField(verbose_name='Количество в рецепте')
 
     def __str__(self):
