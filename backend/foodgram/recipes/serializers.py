@@ -1,6 +1,5 @@
 """Сериализаторы для работы с рецептами."""
 import base64
-from collections import OrderedDict
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
@@ -40,9 +39,9 @@ class TagsConvertSerializer(serializers.ListField):
 
     def to_internal_value(self, data):
         tags = []
-        for id in data:
+        for tag in data:
             try:
-                tag = Tag.objects.get(pk=id)
+                tag = Tag.objects.get(pk=tag)
                 tags.append(tag)
             except Tag.DoesNotExist:
                 raise serializers.ValidationError(f'{id} - такого тега '
@@ -54,24 +53,30 @@ class IngredientsConvertSerializer(serializers.ListField):
 
     def to_representation(self, value):
         ingredients = []
+        ingrs = self.context['request'].data['ingredients']
+        amounts = {}
+        for ingr in ingrs:
+            amounts[ingr['id']] = ingr['amount']
         if value is None:
             return None
         else:
             for val in value.all():
-                ingredient = { 'id': vars(val)['id'],
-                               'name': vars(val)['name'],
-                               'measurement_unit': vars(val)['measurement_unit'],
-                               'amount': vars(val)['amount']}
+                ingredient = {
+                    'id': vars(val)['id'],
+                    'name': vars(val)['name'],
+                    'measurement_unit': vars(val)['measurement_unit'],
+                    'amount': amounts[vars(val)['id']]}
                 ingredients.append(ingredient)
             return ingredients
 
     def to_internal_value(self, data):
         ingredients = []
-        for id in data:
+        for ingredient in data:
             try:
-                ingredient = Tag.objects.get(pk=id)
-                ingredients.append(ingredient)
-            except Tag.DoesNotExist:
+                ingredient_obj = Ingredient.objects.get(pk=ingredient['id'])
+                ingredients.append({'ingredient': ingredient_obj,
+                                    'amount': ingredient['amount']})
+            except Ingredient.DoesNotExist:
                 raise serializers.ValidationError(f'{id} - такого ингредиента '
                                                   f'не существует')
         return ingredients
@@ -106,12 +111,31 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('category')
-        recipe = Recipe.objects.create(**validated_data)
+        ingredients = validated_data.pop('ingredients')
+        user = self.context['request'].user
+        recipe = Recipe.objects.create(**validated_data, author=user)
         for tag in tags:
             TagRecipe.objects.create(tag=tag, recipe=recipe)
         for ingredient in ingredients:
-            IngredientRecipe.objects.create(ingredient=ingredient['id'], recipe=recipe, amount=ingredient['amount'])
+            IngredientRecipe.objects.create(
+                ingredient=ingredient['ingredient'],
+                recipe=recipe, amount=ingredient['amount'])
+        return recipe
+
+    def update(self, instance, validated_data):
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredients')
+        recipe, status = Recipe.objects.update_or_create(
+            pk=instance.id,
+            defaults={**validated_data})
+        TagRecipe.objects.filter(recipe=instance.id, ).delete()
+        IngredientRecipe.objects.filter(recipe=instance.id, ).delete()
+        for tag in tags:
+            TagRecipe.objects.create(tag=tag, recipe=recipe)
+        for ingredient in ingredients:
+            IngredientRecipe.objects.create(
+                ingredient=ingredient['ingredient'],
+                recipe=recipe, amount=ingredient['amount'])
         return recipe
 
 
@@ -120,6 +144,7 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         'get_amount',
         read_only=True,
     )
+
     class Meta:
         """Meta class."""
 

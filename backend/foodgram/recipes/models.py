@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator 
+from django.core.validators import MinValueValidator
 from user.models import User
 
 
@@ -11,7 +11,7 @@ class Tag(models.Model):
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
         ordering = ('name', )
-    
+
     def __str__(self):
         return f'{self.name}'
 
@@ -25,7 +25,7 @@ class Ingredient(models.Model):
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         ordering = ('name', )
-    
+
     def __str__(self):
         return f'{self.name} {self.measurement_unit}'
 
@@ -37,7 +37,9 @@ class Recipe(models.Model):
                                        validators=[MinValueValidator(1), ])
     image = models.ImageField(upload_to='recipes/images/')
     tags = models.ManyToManyField(Tag, through='TagRecipe')
-    ingredients = models.ManyToManyField(Ingredient, through='IngredientRecipe')
+    ingredients = models.ManyToManyField(Ingredient,
+                                         through='IngredientRecipe',
+                                         related_name='ingredients')
     author = models.ForeignKey(User, on_delete=models.CASCADE,
                                related_name='recipes')
 
@@ -56,12 +58,13 @@ class TagRecipe(models.Model):
 
 
 class IngredientRecipe(models.Model):
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='ingredients')
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ingredientsres')
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE,
+                                   related_name='ingredient')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     amount = models.IntegerField(verbose_name='Количество в рецепте')
 
     def __str__(self):
-        return f'{self.ingredient} {self.recipe}'
+        return f'{self.ingredient} {self.recipe} {self.amount}'
 
 
 class UserRecipeLists(models.Model):

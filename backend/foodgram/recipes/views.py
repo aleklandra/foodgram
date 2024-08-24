@@ -1,11 +1,9 @@
-from django.shortcuts import render
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from .models import (Ingredient, Tag, Recipe)
 from .serializers import (IngredientsSerializer, TagsSerializer,
                           RecipeSerializer, RecipeListSerializer)
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly,)
-from rest_framework import filters, status, mixins
+from rest_framework.permissions import (IsAuthenticatedOrReadOnly,)
+from rest_framework import mixins
 
 
 class IngredientsViewSet(mixins.ListModelMixin,

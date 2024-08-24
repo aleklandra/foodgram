@@ -7,10 +7,9 @@ from foodgram.forms import TagForm
 
 admin.site.empty_value_display = 'Не задано'
 
-FORM={
-        models.CharField: {'widget': TextInput(attrs={'size':'10'})},
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':30})},
-    }
+FORM = {models.CharField: {'widget': TextInput(attrs={'size': '10'})},
+        models.TextField: {'widget': Textarea(attrs={'rows': 1,
+                                                     'cols': 30})}, }
 
 
 class RecipeInline(admin.StackedInline):
@@ -30,7 +29,7 @@ class TagsAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'name',
-        'slug',     
+        'slug',
     )
     list_editable = (
         'name',
@@ -53,7 +52,7 @@ class IngredientsAdmin(admin.ModelAdmin):
     )
     list_editable = (
         'measurement_unit',
-    )    
+    )
     search_fields = ('name', )
     list_filter = ('name', )
     list_display_links = ('name',)
@@ -82,6 +81,6 @@ class RecipesAdmin(admin.ModelAdmin):
         IngredientsInline,
         RecipeInline
     )
-    search_fields = ('name', 'author' )
-    list_filter = ('name', 'author' )
+    search_fields = ('name', 'author')
+    list_filter = ('name', 'author')
     list_display_links = ('id',)
