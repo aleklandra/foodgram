@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.urls import reverse
 from user.models import User
 
 
@@ -60,7 +61,7 @@ class TagRecipe(models.Model):
 class IngredientRecipe(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE,
                                    related_name='ingredient')
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe')
     amount = models.IntegerField(verbose_name='Количество в рецепте')
 
     def __str__(self):
@@ -68,8 +69,8 @@ class IngredientRecipe(models.Model):
 
 
 class UserRecipeLists(models.Model):
-    recipe = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='user_recipe')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user')
     is_favorited = models.BooleanField()
     is_in_shopping_cart = models.BooleanField()
 

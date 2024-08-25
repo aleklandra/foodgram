@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
+    'django_url_shortener',
 
     'user.apps.UserConfig',
     'recipes.apps.RecipesConfig'
@@ -60,6 +61,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'foodgram.urls'
+
+SHORTCODE_MIN = 4
+SHORTCODE_MAX = 20
 
 TEMPLATES = [
     {

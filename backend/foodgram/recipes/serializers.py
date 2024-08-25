@@ -2,8 +2,11 @@
 import base64
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from django_url_shortener.utils import shorten_url
 from rest_framework import serializers
-from .models import Tag, Ingredient, Recipe, TagRecipe, IngredientRecipe
+from .models import (Tag, Ingredient, Recipe, TagRecipe, IngredientRecipe,
+                     UserRecipeLists)
+
 
 
 User = get_user_model()
@@ -139,24 +142,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
 
-class IngredientRecipeSerializer(serializers.ModelSerializer):
-    amount = serializers.SerializerMethodField(
-        'get_amount',
-        read_only=True,
-    )
-
-    class Meta:
-        """Meta class."""
-
-        model = Ingredient
-        fields = ('id', 'name', 'amount', 'measurement_unit')
-
-    def get_amount(self, obj):
-        """Image function."""
-        ingred = IngredientRecipe.objects.get(ingredient=obj)
-        return ingred.amount
-
-
 class RecipeListSerializer(serializers.ModelSerializer):
     """Recipe."""
     image = serializers.SerializerMethodField(
@@ -164,18 +149,55 @@ class RecipeListSerializer(serializers.ModelSerializer):
         read_only=True,
     )
     tags = TagsSerializer(many=True,)
-    ingredients = IngredientRecipeSerializer(many=True, )
+    ingredients = IngredientsSerializer(many=True, read_only=True)
+    is_favorited = serializers.SerializerMethodField(
+        'get_is_favorited',
+        read_only=True,
+    )
+
 
     class Meta:
         """Meta class."""
 
         model = Recipe
-        fields = ('ingredients', 'tags', 'image', 'name',
-                  'text', 'cooking_time', 'id')
-        read_only_field = ('id', 'author')
+        fields = ('id', 'ingredients', 'tags', 'image', 'name',
+                  'text', 'cooking_time', 'is_favorited',
+                  )
+        read_only_field = ('id', 'author', 'is_favorited', )
 
     def get_image_url(self, obj):
         """Image function."""
         if obj.image:
             return obj.image.url
         return None
+    
+    def get_is_favorited(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return True
+        recipe = UserRecipeLists.objects.get(user=user, recipe=obj)
+        print(recipe)
+        if recipe is None:
+            return False
+        return True
+
+    def to_representation(self, instance):
+        result = super(RecipeListSerializer, self).to_representation(instance)
+        for ingr in result['ingredients']:
+            ingr.update(IngredientRecipe.objects.values('amount').get(recipe=instance, ingredient_id=ingr['id']))
+        return result
+
+
+class GetLinkRecipeSerializer(serializers.HyperlinkedModelSerializer):
+    short_link = serializers.HyperlinkedIdentityField(view_name='recipe-detail')
+
+    class Meta:
+        model = Recipe
+        fields = ('short_link', )
+        read_only_fields = ('short_link', )
+    
+    def to_representation(self, instance):
+        result = super(GetLinkRecipeSerializer, self).to_representation(instance)
+        created, short_url = shorten_url(result['short_link'])
+        return {'short-link': short_url}
+
