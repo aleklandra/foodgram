@@ -69,10 +69,10 @@ class IngredientRecipe(models.Model):
 
 
 class UserRecipeLists(models.Model):
-    recipe = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='user_recipe')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='user_recipe')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user')
-    is_favorited = models.BooleanField()
-    is_in_shopping_cart = models.BooleanField()
+    is_favorited = models.BooleanField(default=False)
+    is_in_shopping_cart = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.user} {self.recipe}'

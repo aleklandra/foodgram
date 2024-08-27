@@ -3,6 +3,7 @@ import base64
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django_url_shortener.utils import shorten_url
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from .models import (Tag, Ingredient, Recipe, TagRecipe, IngredientRecipe,
                      UserRecipeLists)
@@ -170,21 +171,23 @@ class RecipeListSerializer(serializers.ModelSerializer):
         if obj.image:
             return obj.image.url
         return None
-    
+
     def get_is_favorited(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
             return True
-        recipe = UserRecipeLists.objects.get(user=user, recipe=obj)
-        print(recipe)
-        if recipe is None:
+        print(obj)
+        recipe = UserRecipeLists.objects.filter(user=user, recipe=obj,
+                                                is_favorited=True)
+        if recipe.count() == 0:
             return False
         return True
 
     def to_representation(self, instance):
         result = super(RecipeListSerializer, self).to_representation(instance)
         for ingr in result['ingredients']:
-            ingr.update(IngredientRecipe.objects.values('amount').get(recipe=instance, ingredient_id=ingr['id']))
+            ingr.update(IngredientRecipe.objects.values('amount').get(recipe=instance,
+                                                                      ingredient_id=ingr['id']))
         return result
 
 
@@ -201,3 +204,22 @@ class GetLinkRecipeSerializer(serializers.HyperlinkedModelSerializer):
         created, short_url = shorten_url(result['short_link'])
         return {'short-link': short_url}
 
+
+class FavoriteRecipeSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField(
+        'get_image_url',
+        read_only=True,
+    )
+
+    class Meta:
+        """Meta class."""
+
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time', )
+        read_only_field = ('id', 'name', 'image', 'cooking_time', )
+
+    def get_image_url(self, obj):
+        """Image function."""
+        if obj.image:
+            return obj.image.url
+        return None

@@ -1,8 +1,9 @@
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from .models import (Ingredient, Tag, Recipe)
+from .models import (Ingredient, Tag, Recipe, UserRecipeLists)
 from recipes.serializers import (IngredientsSerializer, TagsSerializer,
                           RecipeSerializer, RecipeListSerializer,
-                          GetLinkRecipeSerializer)
+                          GetLinkRecipeSerializer,
+                          FavoriteRecipeSerializer)
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import (IsAuthenticatedOrReadOnly, IsAuthenticated)
 from rest_framework import mixins, status
@@ -42,10 +43,48 @@ class RecipeViewSet(ModelViewSet):
         recipe = get_object_or_404(Recipe, id=pk)
         serializer = self.get_serializer(recipe)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(
+        detail=True,
+        methods=('post', 'delete'),
+        permission_classes=(IsAuthenticated,),
+        url_path='favorite'
+    )
+    def favorite(self, request, pk):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        try:
+            tmp = UserRecipeLists.objects.get(recipe=pk,
+                                                        user=request.user,
+                                                        is_favorited=True)
+        except UserRecipeLists.DoesNotExist:
+            tmp = None
+        if request.method == 'POST':
+            if tmp is None:
+                UserRecipeLists.objects.create(
+                    user=request.user, is_favorited=True,
+                    recipe=recipe)
+                serializer = self.get_serializer(recipe)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'errors': 'Рецепт уже добавлен в избранное'},
+                                status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if tmp is None:
+                return Response({'errors': 'Рецепт не был ранее добавлен в избранное'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            else:
+                UserRecipeLists.objects.update_or_create(
+                    id=tmp.id,
+                    defaults={'user': request.user,
+                              'is_favorited': False,
+                              'recipe': recipe})
+                return Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return RecipeListSerializer
         if self.action == 'get-link':
             return GetLinkRecipeSerializer
+        if self.action == 'favorite':
+            return FavoriteRecipeSerializer
         return super().get_serializer_class()
