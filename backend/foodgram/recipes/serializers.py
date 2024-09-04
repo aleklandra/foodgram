@@ -5,8 +5,9 @@ from django.core.files.base import ContentFile
 from django_url_shortener.utils import shorten_url
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from .models import (Tag, Ingredient, Recipe, TagRecipe, IngredientRecipe,
+from recipes.models import (Tag, Ingredient, Recipe, TagRecipe, IngredientRecipe,
                      UserRecipeLists)
+from user.serializers import CustomUserSerializer
 
 
 
@@ -155,14 +156,14 @@ class RecipeListSerializer(serializers.ModelSerializer):
         'get_is_favorited',
         read_only=True,
     )
-
+    author = CustomUserSerializer()
 
     class Meta:
         """Meta class."""
 
         model = Recipe
         fields = ('id', 'ingredients', 'tags', 'image', 'name',
-                  'text', 'cooking_time', 'is_favorited',
+                  'text', 'cooking_time', 'is_favorited', 'author'
                   )
         read_only_field = ('id', 'author', 'is_favorited', )
 
@@ -175,8 +176,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
-            return True
-        print(obj)
+            return False
         recipe = UserRecipeLists.objects.filter(user=user, recipe=obj,
                                                 is_favorited=True)
         if recipe.count() == 0:

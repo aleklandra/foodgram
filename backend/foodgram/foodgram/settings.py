@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djoser',
     'django_url_shortener',
+    'django_filters',
 
     'user.apps.UserConfig',
     'recipes.apps.RecipesConfig'
@@ -124,7 +125,10 @@ REST_FRAMEWORK = {
    ),
 
     'DEFAULT_PAGINATION_CLASS': 'user.pagination.UsersPagination',
-    'PAGE_SIZE': 100
+    'PAGE_SIZE': 100,
+
+    'SEARCH_PARAM': 'name'
+
 
 }
 
@@ -176,7 +180,7 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = 'django.core.mail.backends.<тип бэкенда>.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 
 EMAIL_FILE_PATH = BASE_DIR / 'sent_emails' 
 
