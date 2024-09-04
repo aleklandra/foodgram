@@ -223,3 +223,8 @@ class FavoriteRecipeSerializer(serializers.ModelSerializer):
         if obj.image:
             return obj.image.url
         return None
+
+class DownloadShoppingCartSerializer(serializers.ModelSerializer):
+    class Meta:
+        """Meta class."""
+        model = Recipe

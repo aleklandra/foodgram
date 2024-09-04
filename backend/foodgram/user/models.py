@@ -19,3 +19,8 @@ class User(AbstractUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'password']
+
+
+class UserSubscription(models.Model):
+    person_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_person')
+    sub_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_subscription')

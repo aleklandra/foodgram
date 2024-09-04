@@ -6,6 +6,8 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from djoser.serializers import UserSerializer
+from user.models import UserSubscription
+from recipes.models import Recipe
 
 
 User = get_user_model()
@@ -31,7 +33,7 @@ class UserAvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('avatar', )
-    
+
     def update(self, instance, validated_data):
         instance.avatar = validated_data.get("avatar", instance.avatar)
         instance.save()
@@ -64,12 +66,25 @@ class CustomUserSerializer(UserSerializer):
         'get_avatar_url',
         read_only=True,
     )
+    is_subscribed = serializers.SerializerMethodField(
+        'get_is_subscribed',
+        read_only=True,
+    )
+    recipes = serializers.SerializerMethodField(
+        'get_recipes',
+        read_only=True,
+    )
+    recipes_count = serializers.SerializerMethodField(
+        'get_recipes_count',
+        read_only=True,
+    )
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'first_name', 'last_name', 'password', 'avatar')
-        extra_kwargs = {'password': {'write_only': True}}
-    
+        fields = ('email', 'username', 'first_name', 'last_name', 'password',
+                  'avatar', 'id', 'is_subscribed', 'recipes', 'recipes_count')
+        extra_kwargs = {'password': {'write_only': True},}
+
     def create(self, validated_data):
         user = User(
             email=validated_data['email'],
@@ -83,11 +98,56 @@ class CustomUserSerializer(UserSerializer):
 
     def get_avatar_url(self, obj):
         """Avatar function."""
-        if self.context['request'].path != '/api/users/' and obj.avatar:
+        if obj.avatar:
             return obj.avatar.url
         return None
-    
+
+    def get_is_subscribed(self, obj):
+        try:
+            tmp = UserSubscription.objects.get(person_id=self.context['request'].user.id,
+                                     sub_id=obj)
+        except UserSubscription.DoesNotExist:
+            tmp = None
+        if tmp is None:
+            return False
+        else:
+            return True
+
+    def get_recipes(self, obj):
+        if self.context['request'].path == '/api/users/subscriptions/':
+            request = self.context.get('request')
+            if request.query_params.get('recipes_limit'):
+                count = int(request.query_params.get('recipes_limit'))
+            else:
+                count = None
+            recipes = Recipe.objects.filter(author=obj.id)[:count]
+            recipe_list = []
+            for recipe in recipes:
+                recipe_list.append(
+                    {
+                        'id': recipe.id,
+                        'name': recipe.name,
+                        'image': recipe.image.url,
+                        'cooking_time': recipe.cooking_time
+                    }
+                )
+            if len(recipe_list) != 0:
+                return recipe_list
+            else:
+                return None
+        else:
+            return None
+
+    def get_recipes_count(self, obj):
+        if self.context['request'].path == '/api/users/subscriptions/':
+            recipes = Recipe.objects.filter(author=obj.id).count()
+            if recipes is None:
+                return 0
+            else:
+                return recipes
+        else:
+            return None
+
     def to_representation(self, instance):
         result = super(CustomUserSerializer, self).to_representation(instance)
         return OrderedDict([(key, result[key]) for key in result if result[key] is not None])
-
