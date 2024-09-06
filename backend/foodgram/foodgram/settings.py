@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'django_filters',
 
     'user.apps.UserConfig',
-    'recipes.apps.RecipesConfig'
+    'recipes.apps.RecipesConfig',
+    'adminka.apps.AdminkaConfig'
 ]
 
 MIDDLEWARE = [

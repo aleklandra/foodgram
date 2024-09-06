@@ -25,7 +25,6 @@ from rest_framework.decorators import action
 from rest_framework import filters
 
 
-
 class IngredientsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
                          GenericViewSet):
     queryset = Ingredient.objects.all()

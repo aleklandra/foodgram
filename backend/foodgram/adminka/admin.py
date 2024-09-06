@@ -1,8 +1,15 @@
 from django.contrib import admin
 from django.db import models
 from django.forms import TextInput, Textarea
-from recipes.models import Tag, Ingredient, TagRecipe, Recipe, IngredientRecipe
-from foodgram.forms import TagForm
+from recipes.models import (Tag,
+                            Ingredient,
+                            TagRecipe,
+                            Recipe,
+                            IngredientRecipe,
+                            UserRecipeLists)
+from user.models import User
+from recipes.models import UserRecipeLists
+from adminka.forms import TagForm
 
 
 admin.site.empty_value_display = 'Не задано'
@@ -20,6 +27,33 @@ class RecipeInline(admin.StackedInline):
 class IngredientsInline(admin.StackedInline):
     model = IngredientRecipe
     extra = 0
+
+
+class UserRecipeListsInLine(admin.StackedInline):
+    model = UserRecipeLists
+    extra = 0
+
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = (
+        'email',
+        'username',
+        'first_name',
+        'last_name',
+        'avatar',
+    )
+    list_editable = (
+        'first_name',
+        'last_name',
+        'avatar',
+        'username'
+    )
+    inlines = (
+        UserRecipeListsInLine,
+    )
+    search_fields = ('email', 'username')
+    list_display_links = ('email',)
 
 
 @admin.register(Tag)
@@ -67,7 +101,9 @@ class RecipesAdmin(admin.ModelAdmin):
         'text',
         'cooking_time',
         'image',
-        'author'
+        'author',
+        'author_username',
+        'favorite_count'
 
     )
     list_editable = (
@@ -75,12 +111,23 @@ class RecipesAdmin(admin.ModelAdmin):
         'text',
         'cooking_time',
         'image',
-        'author'
+        'author',
     )
     inlines = (
         IngredientsInline,
-        RecipeInline
+        RecipeInline,
+        UserRecipeListsInLine
     )
     search_fields = ('name', 'author')
-    list_filter = ('name', 'author')
+    list_filter = ('tags', )
     list_display_links = ('id',)
+
+    def author_username(self, obj):
+        return obj.author.username
+    
+    def favorite_count(self, obj):
+        return UserRecipeLists.objects.filter(recipe=obj,
+                                              is_favorited=True).count()
+
+    author_username.short_description = 'Имя автора'
+    favorite_count.short_description = 'В избранном'
