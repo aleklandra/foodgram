@@ -206,22 +206,6 @@ class RecipeListSerializer(serializers.ModelSerializer):
         return result
 
 
-class GetLinkRecipeSerializer(serializers.HyperlinkedModelSerializer):
-    short_link = serializers.HyperlinkedIdentityField(
-        view_name='recipe-detail')
-
-    class Meta:
-        model = Recipe
-        fields = ('short_link', )
-        read_only_fields = ('short_link', )
-
-    def to_representation(self, instance):
-        result = super(GetLinkRecipeSerializer,
-                       self).to_representation(instance)
-        created, short_url = shorten_url(result['short_link'])
-        return {'short-link': short_url}
-
-
 class FavoriteRecipeSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField(
         'get_image_url',

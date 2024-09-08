@@ -2,6 +2,7 @@ import io
 from os import path
 import reportlab  # type: ignore
 from django.http import FileResponse
+from django.urls import reverse, NoReverseMatch
 from reportlab.lib.units import inch  # type: ignore
 from reportlab.lib.pagesizes import A4  # type: ignore
 from reportlab.pdfgen import canvas  # type: ignore
@@ -15,10 +16,10 @@ from recipes.models import (Ingredient,
                             IngredientRecipe, )
 from recipes.serializers import (IngredientsSerializer, TagsSerializer,
                                  RecipeSerializer, RecipeListSerializer,
-                                 GetLinkRecipeSerializer,
                                  FavoriteRecipeSerializer,
                                  DownloadShoppingCartSerializer)
 from django.shortcuts import get_object_or_404
+from django_url_shortener.utils import shorten_url
 from rest_framework.permissions import (IsAuthenticatedOrReadOnly,
                                         IsAuthenticated)
 from rest_framework import mixins, status
@@ -108,9 +109,11 @@ class RecipeViewSet(ModelViewSet):
     )
     def get_link(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
-        print(recipe)
-        serializer = self.get_serializer(recipe, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            stat, short_link = shorten_url(request.build_absolute_uri('/recipes/' + pk))
+        except NoReverseMatch:
+            return Response({'detail': 'Не найдено'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'short-link':short_link}, status=status.HTTP_200_OK)
 
     @action(
         detail=True,
@@ -249,8 +252,6 @@ class RecipeViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return RecipeListSerializer
-        if self.action == 'get_link':
-            return GetLinkRecipeSerializer
         if self.action == 'favorite' or self.action == 'shopping_cart':
             return FavoriteRecipeSerializer
         if self.action == 'download_shopping_cart':
