@@ -3,12 +3,11 @@ import base64
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django_url_shortener.utils import shorten_url
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from recipes.models import (Tag, Ingredient, Recipe, TagRecipe, IngredientRecipe,
-                     UserRecipeLists)
+from recipes.models import (Tag, Ingredient, Recipe, TagRecipe,
+                            IngredientRecipe,
+                            UserRecipeLists)
 from user.serializers import CustomUserSerializer
-
 
 
 User = get_user_model()
@@ -186,21 +185,24 @@ class RecipeListSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         result = super(RecipeListSerializer, self).to_representation(instance)
         for ingr in result['ingredients']:
-            ingr.update(IngredientRecipe.objects.values('amount').get(recipe=instance,
-                                                                      ingredient_id=ingr['id']))
+            ingr.update(IngredientRecipe.objects.values('amount').get(
+                recipe=instance,
+                ingredient_id=ingr['id']))
         return result
 
 
 class GetLinkRecipeSerializer(serializers.HyperlinkedModelSerializer):
-    short_link = serializers.HyperlinkedIdentityField(view_name='recipe-detail')
+    short_link = serializers.HyperlinkedIdentityField(
+        view_name='recipe-detail')
 
     class Meta:
         model = Recipe
         fields = ('short_link', )
         read_only_fields = ('short_link', )
-    
+
     def to_representation(self, instance):
-        result = super(GetLinkRecipeSerializer, self).to_representation(instance)
+        result = super(GetLinkRecipeSerializer,
+                       self).to_representation(instance)
         created, short_url = shorten_url(result['short_link'])
         return {'short-link': short_url}
 
@@ -223,6 +225,7 @@ class FavoriteRecipeSerializer(serializers.ModelSerializer):
         if obj.image:
             return obj.image.url
         return None
+
 
 class DownloadShoppingCartSerializer(serializers.ModelSerializer):
     class Meta:

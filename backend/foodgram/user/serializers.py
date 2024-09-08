@@ -35,7 +35,7 @@ class UserAvatarSerializer(serializers.ModelSerializer):
         fields = ('avatar', )
 
     def update(self, instance, validated_data):
-        instance.avatar = validated_data.get("avatar", instance.avatar)
+        instance.avatar = validated_data.get('avatar', instance.avatar)
         instance.save()
         return instance
 
@@ -83,7 +83,7 @@ class CustomUserSerializer(UserSerializer):
         model = User
         fields = ('email', 'username', 'first_name', 'last_name', 'password',
                   'avatar', 'id', 'is_subscribed', 'recipes', 'recipes_count')
-        extra_kwargs = {'password': {'write_only': True},}
+        extra_kwargs = {'password': {'write_only': True}, }
 
     def create(self, validated_data):
         user = User(
@@ -104,8 +104,9 @@ class CustomUserSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         try:
-            tmp = UserSubscription.objects.get(person_id=self.context['request'].user.id,
-                                     sub_id=obj)
+            tmp = UserSubscription.objects.get(
+                person_id=self.context['request'].user.id,
+                sub_id=obj)
         except UserSubscription.DoesNotExist:
             tmp = None
         if tmp is None:
@@ -150,4 +151,5 @@ class CustomUserSerializer(UserSerializer):
 
     def to_representation(self, instance):
         result = super(CustomUserSerializer, self).to_representation(instance)
-        return OrderedDict([(key, result[key]) for key in result if result[key] is not None])
+        return OrderedDict([(key, result[key]) for key in result
+                            if result[key] is not None])

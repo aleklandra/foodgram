@@ -1,28 +1,33 @@
 import io
 from os import path
-import reportlab
+import reportlab  # type: ignore
 from django.http import FileResponse
-from reportlab.lib.units import inch
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.pdfgen import canvas
-import reportlab.rl_config
-reportlab.rl_config.warnOnMissingFontGlyphs = 0
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.units import inch  # type: ignore
+from reportlab.lib.pagesizes import A4  # type: ignore
+from reportlab.pdfgen import canvas  # type: ignore
+import reportlab.rl_config  # type: ignore
+from reportlab.pdfbase import pdfmetrics  # type: ignore
+from reportlab.pdfbase.ttfonts import TTFont  # type: ignore
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from django_filters.rest_framework import DjangoFilterBackend
-from .models import (Ingredient, Tag, Recipe, UserRecipeLists, IngredientRecipe)
+from recipes.models import (Ingredient,
+                            Tag, Recipe,
+                            UserRecipeLists,
+                            IngredientRecipe, )
 from recipes.serializers import (IngredientsSerializer, TagsSerializer,
-                          RecipeSerializer, RecipeListSerializer,
-                          GetLinkRecipeSerializer,
-                          FavoriteRecipeSerializer,
-                          DownloadShoppingCartSerializer)
+                                 RecipeSerializer, RecipeListSerializer,
+                                 GetLinkRecipeSerializer,
+                                 FavoriteRecipeSerializer,
+                                 DownloadShoppingCartSerializer)
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import (IsAuthenticatedOrReadOnly, IsAuthenticated)
+from rest_framework.permissions import (IsAuthenticatedOrReadOnly,
+                                        IsAuthenticated)
 from rest_framework import mixins, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import filters
+
+
+reportlab.rl_config.warnOnMissingFontGlyphs = 0
 
 
 class IngredientsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
@@ -46,33 +51,36 @@ class TagsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('author', 'tags__slug') 
+    permission_classes = (IsAuthenticatedOrReadOnly, )
     http_method_names = ('get', 'post', 'patch', 'delete')
 
     def get_queryset(self):
         queryset = Recipe.objects.all()
-        is_favorited = self.request.query_params.get('is_favorited')
-        if is_favorited is not None:
-            is_favorited = int(is_favorited)
+        author = self.request.query_params.getlist('author')
+        if author != []:
+            queryset_author = Recipe.objects.filter(author__in=author)
+        else:
+            queryset_author = queryset
+        tags = self.request.query_params.getlist('tags')
+        if tags != []:
+            queryset_tag = Recipe.objects.filter(tags__slug__in=tags)
+        else:
+            queryset_tag = queryset
 
-        is_in_shopping_cart = self.request.query_params.get('is_in_shopping_cart')
-        if is_in_shopping_cart is not None:
-            is_in_shopping_cart = int(is_in_shopping_cart)
-
-        if is_in_shopping_cart == 1:
+        is_in_shopping_cart = self.request.query_params.get(
+            'is_in_shopping_cart')
+        if is_in_shopping_cart == '1':
             queryset_shop = UserRecipeLists.objects.values('recipe').filter(
                 is_in_shopping_cart=True,
                 user=self.request.user,)
-        elif is_in_shopping_cart == 0:
+        elif is_in_shopping_cart == '0':
             queryset_shop = UserRecipeLists.objects.values('recipe').filter(
                 is_in_shopping_cart=True,
                 user=self.request.user,)
             queryset_shop = queryset.exclude(id__in=queryset_shop)
         else:
             queryset_shop = queryset
-
+        is_favorited = self.request.query_params.get('is_favorited')
         if is_favorited == 1:
             queryset_fav = UserRecipeLists.objects.values('recipe').filter(
                 is_favorited=True,
@@ -85,7 +93,11 @@ class RecipeViewSet(ModelViewSet):
         else:
             queryset_fav = queryset
 
-        queryset = queryset.filter(id__in=queryset_shop).filter(id__in=queryset_fav)
+        queryset = (queryset.filter(id__in=queryset_shop)
+                    .filter(id__in=queryset_fav)
+                    .filter(id__in=queryset_tag)
+                    .filter(id__in=queryset_author))
+
         return queryset
 
     @action(
@@ -96,9 +108,10 @@ class RecipeViewSet(ModelViewSet):
     )
     def get_link(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
+        print(recipe)
         serializer = self.get_serializer(recipe)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
     @action(
         detail=True,
         methods=('post', 'delete'),
@@ -113,7 +126,14 @@ class RecipeViewSet(ModelViewSet):
         except UserRecipeLists.DoesNotExist:
             tmp = None
         if request.method == 'POST':
-            if tmp is None or tmp.is_favorited==False:
+            if tmp is None:
+                UserRecipeLists.objects.create(
+                    user=request.user,
+                    is_favorited=True,
+                    recipe=recipe)
+                serializer = self.get_serializer(recipe)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            elif tmp.is_favorited is False:
                 UserRecipeLists.objects.update_or_create(
                     id=tmp.id,
                     defaults={'user': request.user,
@@ -125,9 +145,10 @@ class RecipeViewSet(ModelViewSet):
                 return Response({'errors': 'Рецепт уже добавлен в избранное'},
                                 status=status.HTTP_400_BAD_REQUEST)
         else:
-            if tmp is None or tmp.is_favorited==False:
-                return Response({'errors': 'Рецепт не был ранее добавлен в избранное'},
-                                status=status.HTTP_400_BAD_REQUEST)
+            if tmp is None or tmp.is_favorited is False:
+                return Response({
+                    'errors': 'Рецепт не был ранее добавлен в избранное'},
+                    status=status.HTTP_400_BAD_REQUEST)
             else:
                 UserRecipeLists.objects.update_or_create(
                     id=tmp.id,
@@ -150,7 +171,14 @@ class RecipeViewSet(ModelViewSet):
         except UserRecipeLists.DoesNotExist:
             tmp = None
         if request.method == 'POST':
-            if tmp is None or tmp.is_in_shopping_cart==False:
+            if tmp is None:
+                UserRecipeLists.objects.create(
+                    user=request.user,
+                    is_in_shopping_cart=True,
+                    recipe=recipe)
+                serializer = self.get_serializer(recipe)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            elif tmp.is_in_shopping_cart is False:
                 UserRecipeLists.objects.update_or_create(
                     id=tmp.id,
                     defaults={'user': request.user,
@@ -162,9 +190,10 @@ class RecipeViewSet(ModelViewSet):
                 return Response({'errors': 'Рецепт уже есть в списке покупок'},
                                 status=status.HTTP_400_BAD_REQUEST)
         else:
-            if tmp is None or tmp.is_in_shopping_cart==False:
-                return Response({'errors': 'Рецепт не был ранее добавлен в список покупок'},
-                                status=status.HTTP_400_BAD_REQUEST)
+            if tmp is None or tmp.is_in_shopping_cart is False:
+                return Response({
+                    'errors': 'Рецепт не был ранее добавлен в список покупок'},
+                    status=status.HTTP_400_BAD_REQUEST)
             else:
                 UserRecipeLists.objects.update_or_create(
                     id=tmp.id,
@@ -186,9 +215,12 @@ class RecipeViewSet(ModelViewSet):
         ).prefetch_related('recipe')
         shopping_cart = {}
         for recipe in recipes:
-            ingredients = IngredientRecipe.objects.filter(recipe=recipe.id).select_related('ingredient')
+            ingredients = (IngredientRecipe.objects
+                           .filter(recipe=recipe.id)
+                           .select_related('ingredient'))
             for ingr in ingredients:
-                key = str(ingr.ingredient.name + ' ('+ ingr.ingredient.measurement_unit + ')')
+                key = str(ingr.ingredient.name + ' ('
+                          + ingr.ingredient.measurement_unit + ')')
                 if key in shopping_cart.keys():
                     shopping_cart[key] += ingr.amount
                 else:
@@ -197,9 +229,9 @@ class RecipeViewSet(ModelViewSet):
         font_path = path.join(app_path, 'static/fonts/DejaVuSerif.ttf')
         pdfmetrics.registerFont(TTFont('DejaVuSerif', font_path))
         buffer = io.BytesIO()
-        c = canvas.Canvas(buffer,  pagesize=A4)
+        c = canvas.Canvas(buffer, pagesize=A4)
         textobject = c.beginText()
-        textobject.setTextOrigin(inch, 10.8*inch)
+        textobject.setTextOrigin(inch, 10.8 * inch)
         textobject.setFont('DejaVuSerif', 16)
         for ingr in shopping_cart:
             textobject.textLine((ingr + ' - ' + str(shopping_cart[ingr])))
@@ -208,12 +240,13 @@ class RecipeViewSet(ModelViewSet):
         c.showPage()
         c.save()
         buffer.seek(0)
-        return FileResponse(buffer, as_attachment=True, filename='shopping_cart.pdf')
+        return FileResponse(buffer, as_attachment=True,
+                            filename='shopping_cart.pdf')
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return RecipeListSerializer
-        if self.action == 'get-link':
+        if self.action == 'get_link':
             return GetLinkRecipeSerializer
         if self.action == 'favorite' or self.action == 'shopping_cart':
             return FavoriteRecipeSerializer
