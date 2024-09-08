@@ -155,6 +155,10 @@ class RecipeListSerializer(serializers.ModelSerializer):
         'get_is_favorited',
         read_only=True,
     )
+    is_in_shopping_cart = serializers.SerializerMethodField(
+        'get_is_in_shopping_cart',
+        read_only=True,
+    )
     author = CustomUserSerializer()
 
     class Meta:
@@ -162,9 +166,10 @@ class RecipeListSerializer(serializers.ModelSerializer):
 
         model = Recipe
         fields = ('id', 'ingredients', 'tags', 'image', 'name',
-                  'text', 'cooking_time', 'is_favorited', 'author'
-                  )
-        read_only_field = ('id', 'author', 'is_favorited', )
+                  'text', 'cooking_time', 'is_favorited', 'author',
+                  'is_in_shopping_cart')
+        read_only_field = ('id', 'author', 'is_favorited',
+                           'is_in_shopping_cart')
 
     def get_image_url(self, obj):
         """Image function."""
@@ -178,6 +183,16 @@ class RecipeListSerializer(serializers.ModelSerializer):
             return False
         recipe = UserRecipeLists.objects.filter(user=user, recipe=obj,
                                                 is_favorited=True)
+        if recipe.count() == 0:
+            return False
+        return True
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        recipe = UserRecipeLists.objects.filter(user=user, recipe=obj,
+                                                is_in_shopping_cart=True)
         if recipe.count() == 0:
             return False
         return True

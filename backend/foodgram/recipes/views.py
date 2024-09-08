@@ -81,11 +81,11 @@ class RecipeViewSet(ModelViewSet):
         else:
             queryset_shop = queryset
         is_favorited = self.request.query_params.get('is_favorited')
-        if is_favorited == 1:
+        if is_favorited == '1':
             queryset_fav = UserRecipeLists.objects.values('recipe').filter(
                 is_favorited=True,
                 user=self.request.user,)
-        elif is_favorited == 0:
+        elif is_favorited == '0':
             queryset_fav = UserRecipeLists.objects.values('recipe').filter(
                 is_favorited=True,
                 user=self.request.user,)
@@ -109,7 +109,7 @@ class RecipeViewSet(ModelViewSet):
     def get_link(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
         print(recipe)
-        serializer = self.get_serializer(recipe)
+        serializer = self.get_serializer(recipe, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
@@ -213,6 +213,9 @@ class RecipeViewSet(ModelViewSet):
             user=request.user,
             is_in_shopping_cart=True
         ).prefetch_related('recipe')
+        if recipes.count() == 0:
+            return Response({'errors': 'В списке покупок пусто'},
+                            status=status.HTTP_404_NOT_FOUND)
         shopping_cart = {}
         for recipe in recipes:
             ingredients = (IngredientRecipe.objects
