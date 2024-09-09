@@ -233,6 +233,7 @@ class RecipeViewSet(ModelViewSet):
                 else:
                     shopping_cart[key] = ingr.amount
         app_path = path.realpath(path.dirname(__file__))
+        print(app_path)
         font_path = path.join(app_path, 'fonts/DejaVuSerif.ttf')
         pdfmetrics.registerFont(TTFont('DejaVuSerif', font_path))
         buffer = io.BytesIO()
