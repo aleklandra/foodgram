@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-cflq*u517-fy+jentiuhq!k-_ctsesjflsxohzl39*&ib_s43o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['51.250.29.198', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['51.250.29.198', '127.0.0.1', 'localhost', 'alek-uchi.ru']
 
 
 # Application definition
@@ -124,7 +124,7 @@ REST_FRAMEWORK = {
     ),
 
     'DEFAULT_PAGINATION_CLASS': 'user.pagination.UsersPagination',
-    'PAGE_SIZE': 100,
+    'PAGE_SIZE': 6,
 
     'SEARCH_PARAM': 'name'
 
@@ -187,3 +187,10 @@ AUTH_USER_MODEL = 'user.User'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/var/www/foodgram/media/'
+
+USE_X_FORWARDED_HOST = True
+
+SHORTCODE_MIN = 4
+SHORTCODE_MAX = 20
+BASE_URL = 'https://alek-uchi.ru'
+

@@ -108,12 +108,13 @@ class RecipeViewSet(ModelViewSet):
         url_path='get-link'
     )
     def get_link(self, request, pk):
-        recipe = get_object_or_404(Recipe, id=pk)
+        get_object_or_404(Recipe, id=pk)
         try:
-            stat, short_link = shorten_url(request.build_absolute_uri('/recipes/' + pk))
+           stat, short_link = shorten_url(request.build_absolute_uri('/recipes/' + pk))
         except NoReverseMatch:
             return Response({'detail': 'Не найдено'}, status=status.HTTP_404_NOT_FOUND)
-        return Response({'short-link':short_link}, status=status.HTTP_200_OK)
+        return Response({'short-link': short_link},
+                        status=status.HTTP_200_OK)
 
     @action(
         detail=True,
@@ -232,7 +233,7 @@ class RecipeViewSet(ModelViewSet):
                 else:
                     shopping_cart[key] = ingr.amount
         app_path = path.realpath(path.dirname(__file__))
-        font_path = path.join(app_path, 'static/fonts/DejaVuSerif.ttf')
+        font_path = path.join(app_path, 'fonts/DejaVuSerif.ttf')
         pdfmetrics.registerFont(TTFont('DejaVuSerif', font_path))
         buffer = io.BytesIO()
         c = canvas.Canvas(buffer, pagesize=A4)
