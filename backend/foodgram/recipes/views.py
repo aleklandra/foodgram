@@ -2,7 +2,7 @@ import io
 from os import path
 import reportlab  # type: ignore
 from django.http import FileResponse
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch
 from reportlab.lib.units import inch  # type: ignore
 from reportlab.lib.pagesizes import A4  # type: ignore
 from reportlab.pdfgen import canvas  # type: ignore
@@ -110,9 +110,11 @@ class RecipeViewSet(ModelViewSet):
     def get_link(self, request, pk):
         get_object_or_404(Recipe, id=pk)
         try:
-           stat, short_link = shorten_url(request.build_absolute_uri('/recipes/' + pk))
+            _, short_link = shorten_url(
+                request.build_absolute_uri('/recipes/' + pk))
         except NoReverseMatch:
-            return Response({'detail': 'Не найдено'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Не найдено'},
+                            status=status.HTTP_404_NOT_FOUND)
         return Response({'short-link': short_link},
                         status=status.HTTP_200_OK)
 

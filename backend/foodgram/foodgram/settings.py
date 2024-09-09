@@ -193,4 +193,3 @@ USE_X_FORWARDED_HOST = True
 SHORTCODE_MIN = 4
 SHORTCODE_MAX = 20
 BASE_URL = 'https://alek-uchi.ru'
-

@@ -2,7 +2,6 @@
 import base64
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from django_url_shortener.utils import shorten_url
 from rest_framework import serializers
 from recipes.models import (Tag, Ingredient, Recipe, TagRecipe,
                             IngredientRecipe,
