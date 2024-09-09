@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.db import models
 
 
 class User(AbstractUser):
@@ -27,5 +27,7 @@ class User(AbstractUser):
 
 
 class UserSubscription(models.Model):
-    person_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_person')
-    sub_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_subscription')
+    person_id = models.ForeignKey(User, on_delete=models.CASCADE,
+                                  related_name='user_person')
+    sub_id = models.ForeignKey(User, on_delete=models.CASCADE,
+                               related_name='user_subscription')

@@ -1,7 +1,8 @@
-from django.db import models
+from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
-from django.urls import reverse
-from user.models import User
+from django.db import models
+
+User = get_user_model()
 
 
 class Tag(models.Model):
@@ -67,12 +68,12 @@ class TagRecipe(models.Model):
         return f'{self.tag} {self.recipe}'
 
 
-
 class IngredientRecipe(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE,
                                    related_name='ingredient',
                                    verbose_name='Ингредиент')
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe',
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
+                               related_name='recipe',
                                verbose_name='Рецепт')
     amount = models.IntegerField(verbose_name='Количество в рецепте')
 
@@ -81,9 +82,11 @@ class IngredientRecipe(models.Model):
 
 
 class UserRecipeLists(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='user_recipe',
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
+                               related_name='user_recipe',
                                verbose_name='Рецепт')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user',
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             related_name='user',
                              verbose_name='Подписчик')
     is_favorited = models.BooleanField(default=False,
                                        verbose_name='В избранном')

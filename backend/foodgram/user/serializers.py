@@ -1,14 +1,15 @@
 """Сериализаторы для работы с пользователем."""
 import base64
 from collections import OrderedDict
+
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from djoser.serializers import UserSerializer
+from recipes.models import Recipe
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from djoser.serializers import UserSerializer
-from user.models import UserSubscription
-from recipes.models import Recipe
 
+from user.models import UserSubscription
 
 User = get_user_model()
 

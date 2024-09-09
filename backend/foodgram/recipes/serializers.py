@@ -1,13 +1,13 @@
 """Сериализаторы для работы с рецептами."""
 import base64
+
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
-from recipes.models import (Tag, Ingredient, Recipe, TagRecipe,
-                            IngredientRecipe,
-                            UserRecipeLists)
 from user.serializers import CustomUserSerializer
 
+from recipes.models import (Ingredient, IngredientRecipe, Recipe, Tag,
+                            TagRecipe, UserRecipeLists)
 
 User = get_user_model()
 

@@ -1,34 +1,32 @@
 import io
 from os import path
-import reportlab  # type: ignore
+
+import reportlab
+import reportlab.rl_config
 from django.http import FileResponse
-from django.urls import NoReverseMatch
-from reportlab.lib.units import inch  # type: ignore
-from reportlab.lib.pagesizes import A4  # type: ignore
-from reportlab.pdfgen import canvas  # type: ignore
-import reportlab.rl_config  # type: ignore
-from reportlab.pdfbase import pdfmetrics  # type: ignore
-from reportlab.pdfbase.ttfonts import TTFont  # type: ignore
-from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from recipes.models import (Ingredient,
-                            Tag, Recipe,
-                            UserRecipeLists,
-                            IngredientRecipe, )
-from recipes.serializers import (IngredientsSerializer, TagsSerializer,
-                                 RecipeSerializer, RecipeListSerializer,
-                                 FavoriteRecipeSerializer,
-                                 DownloadShoppingCartSerializer)
 from django.shortcuts import get_object_or_404
+from django.urls import NoReverseMatch
 from django_url_shortener.utils import shorten_url
-from rest_framework.permissions import (IsAuthenticatedOrReadOnly,
-                                        IsAuthenticated)
-from rest_framework import mixins, status
-from rest_framework.response import Response
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from rest_framework import filters, mixins, status
 from rest_framework.decorators import action
-from rest_framework import filters
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
-
-reportlab.rl_config.warnOnMissingFontGlyphs = 0
+from recipes.models import (Ingredient, IngredientRecipe, Recipe, Tag,
+                            UserRecipeLists)
+from recipes.permissions import IsAuthorOrAdminOrReadOnly
+from recipes.serializers import (DownloadShoppingCartSerializer,
+                                 FavoriteRecipeSerializer,
+                                 IngredientsSerializer,
+                                 RecipeListSerializer, RecipeSerializer,
+                                 TagsSerializer)
 
 
 class IngredientsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
@@ -52,7 +50,7 @@ class TagsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthorOrAdminOrReadOnly, )
     http_method_names = ('get', 'post', 'patch', 'delete')
 
     def get_queryset(self):
@@ -104,7 +102,7 @@ class RecipeViewSet(ModelViewSet):
     @action(
         detail=True,
         methods=('get', ),
-        permission_classes=(IsAuthenticatedOrReadOnly,),
+        permission_classes=(IsAuthenticated, ),
         url_path='get-link'
     )
     def get_link(self, request, pk):
@@ -121,7 +119,7 @@ class RecipeViewSet(ModelViewSet):
     @action(
         detail=True,
         methods=('post', 'delete'),
-        permission_classes=(IsAuthenticated,),
+        permission_classes=(IsAuthenticated, ),
         url_path='favorite'
     )
     def favorite(self, request, pk):
@@ -166,7 +164,7 @@ class RecipeViewSet(ModelViewSet):
     @action(
         detail=True,
         methods=('post', 'delete'),
-        permission_classes=(IsAuthenticated,),
+        permission_classes=(IsAuthenticated, ),
         url_path='shopping_cart'
     )
     def shopping_cart(self, request, pk):
@@ -211,7 +209,7 @@ class RecipeViewSet(ModelViewSet):
     @action(
         detail=False,
         methods=('get', ),
-        permission_classes=(IsAuthenticated,),
+        permission_classes=(IsAuthenticated, ),
         url_path='download_shopping_cart'
     )
     def download_shopping_cart(self, request,):
@@ -235,7 +233,7 @@ class RecipeViewSet(ModelViewSet):
                 else:
                     shopping_cart[key] = ingr.amount
         app_path = path.realpath(path.dirname(__file__))
-        print(app_path)
+        reportlab.rl_config.warnOnMissingFontGlyphs = 0
         font_path = path.join(app_path, 'fonts/DejaVuSerif.ttf')
         pdfmetrics.registerFont(TTFont('DejaVuSerif', font_path))
         buffer = io.BytesIO()
