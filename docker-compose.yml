@@ -23,7 +23,7 @@ services:
 
     volumes:
       - static:/backend_static
-      - media:/app/foodgram/media
+      - media:/app/media
 
     depends_on:
       - db_foodgram
