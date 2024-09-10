@@ -169,9 +169,6 @@ jobs:
 
           # Выполняет миграции и сбор статики
 
-          sudo docker compose -f docker-compose.yml exec backend_foodgram python manage.py makemigrations
-          sudo docker compose -f docker-compose.yml exec backend_foodgram python manage.py makemigrations recipes
-          sudo docker compose -f docker-compose.yml exec backend_foodgram python manage.py makemigrations user
           sudo docker compose -f docker-compose.yml exec backend_foodgram python manage.py migrate
           sudo docker compose -f docker-compose.yml exec backend_foodgram python manage.py insert
           sudo docker compose -f docker-compose.yml exec backend_foodgram python manage.py collectstatic
