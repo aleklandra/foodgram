@@ -1,0 +1,4 @@
+venv
+.git
+/foodgram/db.sqlite3
+.env
