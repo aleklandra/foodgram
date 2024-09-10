@@ -153,4 +153,4 @@ jobs:
           sudo docker compose -f docker-compose.yml exec backend_foodgram python manage.py migrate
           sudo docker compose -f docker-compose.yml exec backend_foodgram python manage.py insert
           sudo docker compose -f docker-compose.yml exec backend_foodgram python manage.py collectstatic
-          sudo docker compose -f docker-compose.yml exec backend_foodgram cp -r /app/collected_static/. /backend_static/static/ 
+          sudo docker compose -f docker-compose.yml exec backend_foodgram cp -r /app/foodgram/collected_static/. /backend_static/static/ 
