@@ -2,9 +2,9 @@ import csv
 from pathlib import Path
 
 from django.core.management.base import BaseCommand
-from foodgram import settings
-
 from recipes.models import Ingredient
+
+from foodgram import settings
 
 DATA_DICT = {
     'ingredients.csv': Ingredient,

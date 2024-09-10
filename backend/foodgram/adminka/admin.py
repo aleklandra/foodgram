@@ -1,13 +1,12 @@
 """Настройка админки для управления ресурсами."""
 
+from adminka.forms import TagForm
 from django.contrib import admin
 from django.db import models
 from django.forms import Textarea, TextInput
 from recipes.models import (Ingredient, IngredientRecipe, Recipe, Tag,
                             TagRecipe, UserRecipeLists)
 from user.models import User
-
-from adminka.forms import TagForm
 
 admin.site.empty_value_display = 'Не задано'
 
