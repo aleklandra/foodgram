@@ -21,4 +21,5 @@ class Command(BaseCommand):
             with open(Path(dir, file), 'r', encoding="utf8") as f:
                 dict_file = csv.DictReader(f)
                 foodgram_data = [DATA_DICT[file](**row) for row in dict_file]
+                DATA_DICT[file].objects.all().delete()
                 DATA_DICT[file].objects.bulk_create(foodgram_data)
