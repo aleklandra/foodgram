@@ -31,7 +31,7 @@ class IngredientsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
                          GenericViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticated,)
     filter_backends = (filters.SearchFilter, )
     pagination_class = None
     search_fields = ('name',)
@@ -41,7 +41,7 @@ class TagsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
                   GenericViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagsSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticated,)
     pagination_class = None
 
 
@@ -100,7 +100,7 @@ class RecipeViewSet(ModelViewSet):
     @action(
         detail=True,
         methods=('get', ),
-        permission_classes=(IsAuthenticated, ),
+        permission_classes=(IsAuthenticatedOrReadOnly, ),
         url_path='get-link'
     )
     def get_link(self, request, pk):
