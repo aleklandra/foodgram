@@ -12,9 +12,8 @@ from recipes.models import (Ingredient, IngredientRecipe, Recipe, Tag,
 from recipes.permissions import IsAuthorOrAdminOrReadOnly
 from recipes.serializers import (DownloadShoppingCartSerializer,
                                  FavoriteRecipeSerializer,
-                                 IngredientsSerializer,
-                                 RecipeListSerializer, RecipeSerializer,
-                                 TagsSerializer)
+                                 IngredientsSerializer, RecipeListSerializer,
+                                 RecipeSerializer, TagsSerializer)
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics

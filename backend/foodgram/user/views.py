@@ -5,7 +5,6 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 from user.models import UserSubscription
 from user.pagination import UsersPagination
 from user.serializers import CustomUserSerializer, UserAvatarSerializer

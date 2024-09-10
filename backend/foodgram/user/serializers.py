@@ -8,7 +8,6 @@ from djoser.serializers import UserSerializer
 from recipes.models import Recipe
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-
 from user.models import UserSubscription
 
 User = get_user_model()
