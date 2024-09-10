@@ -195,7 +195,7 @@ EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
 AUTH_USER_MODEL = 'user.User'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/var/www/foodgram/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 USE_X_FORWARDED_HOST = True
 
