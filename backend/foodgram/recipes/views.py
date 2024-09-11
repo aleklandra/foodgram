@@ -34,6 +34,7 @@ class IngredientsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
     permission_classes = (IsAuthenticatedOrReadOnly,)
     filter_backends = (filters.SearchFilter, )
     search_fields = ('name',)
+    pagination_class = None
 
 
 class TagsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
@@ -41,6 +42,7 @@ class TagsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
     queryset = Tag.objects.all()
     serializer_class = TagsSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
+    pagination_class = None
 
 
 class RecipeViewSet(ModelViewSet):
