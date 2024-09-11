@@ -103,7 +103,7 @@ class RecipeViewSet(ModelViewSet):
     def get_link(self, request, pk):
         get_object_or_404(Recipe, id=pk)
         try:
-            
+
             short_link = shorten_url(
                 request.build_absolute_uri('/api/recipes/' + pk))
         except NoReverseMatch:

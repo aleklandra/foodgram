@@ -1,8 +1,8 @@
 """Настройка админки для управления ресурсами."""
+from adminka.forms import TagForm, UserChangeForm
 from django.contrib import admin, auth
 from django.db import models
 from django.forms import Textarea, TextInput
-from adminka.forms import TagForm, UserChangeForm
 from recipes.models import (Ingredient, IngredientRecipe, Recipe, Tag,
                             TagRecipe, UserRecipeLists)
 from user.models import User
