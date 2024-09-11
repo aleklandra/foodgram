@@ -31,9 +31,8 @@ class IngredientsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
                          GenericViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     filter_backends = (filters.SearchFilter, )
-    pagination_class = None
     search_fields = ('name',)
 
 
@@ -41,14 +40,12 @@ class TagsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
                   GenericViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagsSerializer
-    permission_classes = (IsAuthenticated,)
-    pagination_class = None
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
 
 class RecipeViewSet(ModelViewSet):
-    queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = (IsAuthorOrAdminOrReadOnly, )
+    permission_classes = (IsAuthorOrAdminOrReadOnly,)
     http_method_names = ('get', 'post', 'patch', 'delete')
 
     def get_queryset(self):

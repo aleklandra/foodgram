@@ -11,6 +11,7 @@ class User(AbstractUser):
     avatar = models.ImageField(
         upload_to='user/images/',
         null=True,
+        blank=True,
         default=None
     )
     password = models.CharField(max_length=150)
