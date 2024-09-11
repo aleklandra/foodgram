@@ -27,7 +27,7 @@ SECRET_KEY = ('django-insecure-cflq*u517-fy+jentiuhq!k-'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['51.250.29.198', '127.0.0.1', 'localhost', 'alek-uchi.ru']
+ALLOWED_HOSTS = ['51.250.29.198', '127.0.0.1', 'localhost', 'alek-uchi.ru', 'backend_foodgram']
 
 
 # Application definition
@@ -107,11 +107,11 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': ('django.contrib.auth.password_validation'
-                 '.UserAttributeSimilarityValidator',)
+                 '.UserAttributeSimilarityValidator'),
     },
     {
         'NAME': ('django.contrib.auth.password_validation'
-                 '.MinimumLengthValidator',)
+                 '.MinimumLengthValidator'),
     },
     {
         'NAME': ('django.contrib.auth.password_validation'
@@ -144,7 +144,7 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     # Устанавливаем срок жизни токена
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_TYPES': ('Bearer',)
 }
 
 DJOSER = {
