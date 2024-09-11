@@ -104,8 +104,8 @@ class RecipeViewSet(ModelViewSet):
         get_object_or_404(Recipe, id=pk)
         try:
 
-            short_link = shorten_url(
-                request.build_absolute_uri('/api/recipes/' + pk))
+            _, short_link = shorten_url(
+                request.build_absolute_uri('/recipes/' + pk))
         except NoReverseMatch:
             return Response({'detail': 'Не найдено'},
                             status=status.HTTP_404_NOT_FOUND)
