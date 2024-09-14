@@ -26,9 +26,20 @@ class User(AbstractUser):
         verbose_name_plural = 'Пользователи'
         ordering = ('email', )
 
+    def __str__(self):
+        return f'{self.username}'
+
 
 class UserSubscription(models.Model):
     person_id = models.ForeignKey(User, on_delete=models.CASCADE,
                                   related_name='user_person')
     sub_id = models.ForeignKey(User, on_delete=models.CASCADE,
                                related_name='user_subscription')
+
+    class Meta:
+        verbose_name = 'Подпика'
+        verbose_name_plural = 'Подписки'
+        ordering = ('sub_id', )
+
+    def __str__(self):
+        return f'{self.sub_id}'

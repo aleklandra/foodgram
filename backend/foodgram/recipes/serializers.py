@@ -1,11 +1,11 @@
-"""Сериализаторы для работы с рецептами."""
 import base64
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from recipes.models import (Ingredient, IngredientRecipe, Recipe, Tag,
-                            TagRecipe, UserRecipeLists)
 from rest_framework import serializers
+
+from recipes.models import (Ingredient, IngredientRecipe, Recipe, Tag,
+                            TagRecipe)
 from user.serializers import CustomUserSerializer
 
 User = get_user_model()
@@ -25,70 +25,28 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-class TagsConvertSerializer(serializers.ListField):
-
-    def to_representation(self, value):
-        tags = []
-        if value is None:
-            return None
-        else:
-            for val in value.all():
-                tag = {'id': vars(val)['id'],
-                       'name': vars(val)['name'],
-                       'slug': vars(val)['slug']}
-                tags.append(tag)
-            return tags
-
-    def to_internal_value(self, data):
-        tags = []
-        for tag in data:
-            try:
-                tag = Tag.objects.get(pk=tag)
-                tags.append(tag)
-            except Tag.DoesNotExist:
-                raise serializers.ValidationError(f'{id} - такого тега '
-                                                  f'не существует')
-        return tags
-
-
-class IngredientsConvertSerializer(serializers.ListField):
-
-    def to_representation(self, value):
-        ingredients = []
-        ingrs = self.context['request'].data['ingredients']
-        amounts = {}
-        for ingr in ingrs:
-            amounts[ingr['id']] = ingr['amount']
-        if value is None:
-            return None
-        else:
-            for val in value.all():
-                ingredient = {
-                    'id': vars(val)['id'],
-                    'name': vars(val)['name'],
-                    'measurement_unit': vars(val)['measurement_unit'],
-                    'amount': amounts[vars(val)['id']]}
-                ingredients.append(ingredient)
-            return ingredients
-
-    def to_internal_value(self, data):
-        ingredients = []
-        for ingredient in data:
-            try:
-                ingredient_obj = Ingredient.objects.get(pk=ingredient['id'])
-                ingredients.append({'ingredient': ingredient_obj,
-                                    'amount': ingredient['amount']})
-            except Ingredient.DoesNotExist:
-                raise serializers.ValidationError(f'{id} - такого ингредиента '
-                                                  f'не существует')
-        return ingredients
-
-
 class IngredientsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
+
+    def to_internal_value(self, data):
+        try:
+            ingredient_obj = Ingredient.objects.get(pk=data['id'])
+        except Ingredient.DoesNotExist:
+            raise serializers.ValidationError(f'{id} - такого ингредиента '
+                                              f'не существует')
+        return {'ingredient': ingredient_obj,
+                'amount': data['amount']}
+
+    def to_representation(self, value):
+        ingredients = super().to_representation(value)
+        if 'ingredients' in self.context['request'].data.keys():
+            for ingr in self.context['request'].data['ingredients']:
+                if ingr['id'] == value.id:
+                    ingredients['amount'] = ingr['amount']
+        return ingredients
 
 
 class TagsSerializer(serializers.ModelSerializer):
@@ -96,11 +54,20 @@ class TagsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ('id', 'name', 'slug')
+        read_only_field = ('name', 'slug')
+
+    def to_internal_value(self, data):
+        try:
+            tag = Tag.objects.get(pk=data)
+        except Tag.DoesNotExist:
+            raise serializers.ValidationError(f'{id} - такого тега '
+                                              f'не существует')
+        return tag
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = IngredientsConvertSerializer()
-    tags = TagsConvertSerializer()
+    ingredients = IngredientsSerializer(many=True)
+    tags = TagsSerializer(many=True)
     image = Base64ImageField(required=False, allow_null=True)
     author = serializers.SlugRelatedField(
         slug_field='username', read_only=True)
@@ -116,12 +83,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         user = self.context['request'].user
         recipe = Recipe.objects.create(**validated_data, author=user)
-        for tag in tags:
-            TagRecipe.objects.create(tag=tag, recipe=recipe)
-        for ingredient in ingredients:
-            IngredientRecipe.objects.create(
-                ingredient=ingredient['ingredient'],
-                recipe=recipe, amount=ingredient['amount'])
+        self.tags_create(tags, recipe)
+        self.ingredients_create(ingredients, recipe)
         return recipe
 
     def update(self, instance, validated_data):
@@ -132,13 +95,23 @@ class RecipeSerializer(serializers.ModelSerializer):
             defaults={**validated_data})
         TagRecipe.objects.filter(recipe=instance.id, ).delete()
         IngredientRecipe.objects.filter(recipe=instance.id, ).delete()
-        for tag in tags:
-            TagRecipe.objects.create(tag=tag, recipe=recipe)
-        for ingredient in ingredients:
-            IngredientRecipe.objects.create(
-                ingredient=ingredient['ingredient'],
-                recipe=recipe, amount=ingredient['amount'])
+        self.tags_create(tags, recipe)
+        self.ingredients_create(ingredients, recipe)
         return recipe
+
+    def ingredients_create(self, ingredients, recipe):
+        ingredients_array = []
+        for ingredient in ingredients:
+            ingredients_array.append(IngredientRecipe(
+                ingredient=ingredient['ingredient'],
+                recipe=recipe, amount=ingredient['amount']))
+        IngredientRecipe.objects.bulk_create(ingredients_array)
+
+    def tags_create(self, tags, recipe):
+        tags_array = []
+        for tag in tags:
+            tags_array.append(TagRecipe(tag=tag, recipe=recipe))
+        TagRecipe.objects.bulk_create(tags_array)
 
 
 class RecipeListSerializer(serializers.ModelSerializer):
@@ -179,21 +152,14 @@ class RecipeListSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         if user.is_anonymous:
             return False
-        recipe = UserRecipeLists.objects.filter(user=user, recipe=obj,
-                                                is_favorited=True)
-        if recipe.count() == 0:
-            return False
-        return True
+        return user.recipes_list.filter(recipe=obj, is_favorited=True).exists()
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
             return False
-        recipe = UserRecipeLists.objects.filter(user=user, recipe=obj,
-                                                is_in_shopping_cart=True)
-        if recipe.count() == 0:
-            return False
-        return True
+        return (user.recipes_list.filter(recipe=obj, is_in_shopping_cart=True)
+                .exists())
 
     def to_representation(self, instance):
         result = super(RecipeListSerializer, self).to_representation(instance)

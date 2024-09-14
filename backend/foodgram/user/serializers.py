@@ -1,13 +1,13 @@
 """Сериализаторы для работы с пользователем."""
 import base64
-from collections import OrderedDict
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer
-from recipes.models import Recipe
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
+from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
+
 from user.models import UserSubscription
 
 User = get_user_model()
@@ -70,14 +70,6 @@ class CustomUserSerializer(UserSerializer):
         'get_is_subscribed',
         read_only=True,
     )
-    recipes = serializers.SerializerMethodField(
-        'get_recipes',
-        read_only=True,
-    )
-    recipes_count = serializers.SerializerMethodField(
-        'get_recipes_count',
-        read_only=True,
-    )
 
     class Meta:
         model = User
@@ -103,53 +95,65 @@ class CustomUserSerializer(UserSerializer):
         return None
 
     def get_is_subscribed(self, obj):
-        try:
-            tmp = UserSubscription.objects.get(
-                person_id=self.context['request'].user.id,
-                sub_id=obj)
-        except UserSubscription.DoesNotExist:
-            tmp = None
-        if tmp is None:
-            return False
-        else:
-            return True
+        user = self.context['request'].user
+        return user.user_person.filter(sub_id=obj).exists()
+
+
+class SubscribtionListSerializer(CustomUserSerializer):
+    recipes = serializers.SerializerMethodField(
+        'get_recipes',
+        read_only=True,
+    )
+    recipes_count = serializers.SerializerMethodField(
+        'get_recipes_count',
+        read_only=True,
+    )
+
+    class Meta:
+        model = User
+        fields = ('email', 'username', 'first_name', 'last_name',
+                  'avatar', 'id', 'is_subscribed', 'recipes', 'recipes_count')
 
     def get_recipes(self, obj):
-        if self.context['request'].path == '/api/users/subscriptions/':
-            request = self.context.get('request')
-            if request.query_params.get('recipes_limit'):
-                count = int(request.query_params.get('recipes_limit'))
-            else:
-                count = None
-            recipes = Recipe.objects.filter(author=obj.id)[:count]
-            recipe_list = []
-            for recipe in recipes:
-                recipe_list.append(
-                    {
-                        'id': recipe.id,
-                        'name': recipe.name,
-                        'image': recipe.image.url,
-                        'cooking_time': recipe.cooking_time
-                    }
-                )
-            if len(recipe_list) != 0:
-                return recipe_list
-            else:
-                return None
-        else:
-            return None
+        request = self.context.get('request')
+        limit = request.query_params.get('recipes_limit')
+        recipes = obj.recipes.values('id',
+                                     'name',
+                                     'image',
+                                     'cooking_time').all()[:limit]
+        for recipe in recipes:
+            recipe['image'] = settings.MEDIA_URL + recipe['image']
+        return recipes
 
     def get_recipes_count(self, obj):
-        if self.context['request'].path == '/api/users/subscriptions/':
-            recipes = Recipe.objects.filter(author=obj.id).count()
-            if recipes is None:
-                return 0
-            else:
-                return recipes
-        else:
-            return None
+        return obj.recipes.all().count()
 
-    def to_representation(self, instance):
-        result = super(CustomUserSerializer, self).to_representation(instance)
-        return OrderedDict([(key, result[key]) for key in result
-                            if result[key] is not None])
+
+class SubscribtionCreateSerializer(serializers.ModelSerializer):
+    person_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all())
+    sub_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all())
+
+    class Meta:
+        fields = '__all__'
+        model = UserSubscription
+        validators = [
+            UniqueTogetherValidator(
+                queryset=UserSubscription.objects.all(),
+                fields=['sub_id', 'person_id'],
+                message='Вы уже подписаны на данного человека'
+            )
+        ]
+
+    def validate(self, data):
+        user = data['person_id']
+        current_sub = data['sub_id']
+        if user == current_sub:
+            raise serializers.ValidationError(
+                ['Подписка на себя невозможна'])
+        return data
+
+    def update(self, instance, validated_data):
+        instance.delete()
+        return
