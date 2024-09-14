@@ -74,7 +74,7 @@ class CustomUserSerializer(UserSerializer):
     class Meta:
         model = User
         fields = ('email', 'username', 'first_name', 'last_name', 'password',
-                  'avatar', 'id', 'is_subscribed', 'recipes', 'recipes_count')
+                  'avatar', 'id', 'is_subscribed', )
         extra_kwargs = {'password': {'write_only': True}, }
 
     def create(self, validated_data):
@@ -96,6 +96,8 @@ class CustomUserSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
+        if user.is_anonymous: 
+            return False
         return user.user_person.filter(sub_id=obj).exists()
 
 
