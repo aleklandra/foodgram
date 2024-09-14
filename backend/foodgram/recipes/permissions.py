@@ -10,12 +10,9 @@ class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
         if request.query_params.get('tags'):
             return request.user.is_authenticated
 
-        return request.method in permissions.SAFE_METHODS
+        return True
 
     def has_object_permission(self, request, view, obj):
-
-        if request.method == 'POST':
-            return request.user.is_authenticated
 
         if request.method in permissions.SAFE_METHODS:
             return True
