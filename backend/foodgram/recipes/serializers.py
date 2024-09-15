@@ -1,5 +1,4 @@
 import base64
-import os
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.core.files.base import ContentFile
