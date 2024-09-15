@@ -37,10 +37,10 @@ def subscribe(request, pk):
         if sub.exists():
             sub.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        else:
-            Response({'errors': ('Вы не подписаны на '
-                                 'данного пользователя')},
-                     status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'errors': ('Вы не подписаны на '
+                                    'данного пользователя')},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class Subscriptions(generics.ListAPIView):

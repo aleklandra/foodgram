@@ -2,6 +2,10 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
+MAX_VALIDATOR = 32000
+MIN_VALIDATOR = 1
+
+
 User = get_user_model()
 
 
@@ -37,7 +41,8 @@ class Recipe(models.Model):
     text = models.TextField(verbose_name='Описание', max_length=256)
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления',
-        validators=[MinValueValidator(1), MaxValueValidator(32000)])
+        validators=[MinValueValidator(MIN_VALIDATOR),
+                    MaxValueValidator(MAX_VALIDATOR)])
     image = models.ImageField(upload_to='recipes/images/',
                               verbose_name='Изображение')
     tags = models.ManyToManyField(Tag, through='TagRecipe')
@@ -89,7 +94,8 @@ class IngredientRecipe(models.Model):
                                verbose_name='Рецепт')
     amount = models.PositiveSmallIntegerField(
         verbose_name='Количество в рецепте',
-        validators=[MinValueValidator(1), MaxValueValidator(32000)])
+        validators=[MinValueValidator(MIN_VALIDATOR),
+                    MaxValueValidator(MAX_VALIDATOR)])
 
     class Meta:
         verbose_name = 'Ингредиент рецепта'

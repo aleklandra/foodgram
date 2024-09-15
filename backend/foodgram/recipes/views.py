@@ -131,17 +131,15 @@ class RecipeViewSet(ModelViewSet, FilterModelMixin):
             if created is True:
                 serializer = self.get_serializer(recipe)
                 return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response({'errors': 'Рецепт уже добавлен в избранное'},
-                                status=status.HTTP_400_BAD_REQUEST)
+            return Response({'errors': 'Рецепт уже добавлен в избранное'},
+                            status=status.HTTP_400_BAD_REQUEST)
         else:
             recipe_fav.delete()
             if created is True:
                 return Response({
                     'errors': 'Рецепт не был ранее добавлен в избранное'},
                     status=status.HTTP_400_BAD_REQUEST)
-            else:
-                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -159,17 +157,15 @@ class RecipeViewSet(ModelViewSet, FilterModelMixin):
             if created is True:
                 serializer = self.get_serializer(recipe)
                 return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response({'errors': 'Рецепт уже добавлен в покупки'},
-                                status=status.HTTP_400_BAD_REQUEST)
+            return Response({'errors': 'Рецепт уже добавлен в покупки'},
+                            status=status.HTTP_400_BAD_REQUEST)
         else:
             recipe_fav.delete()
             if created is True:
                 return Response({
                     'errors': 'Рецепт не был ранее добавлен в покупки'},
                     status=status.HTTP_400_BAD_REQUEST)
-            else:
-                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
