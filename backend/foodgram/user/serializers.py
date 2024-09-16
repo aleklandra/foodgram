@@ -114,7 +114,7 @@ class SubscribtionListSerializer(CustomUserSerializer):
 
     def get_recipes(self, obj):
         request = self.context.get('request')
-        limit = request.query_params.get('recipes_limit')
+        limit = int(request.query_params.get('recipes_limit'))
         recipes = obj.recipes.values('id',
                                      'name',
                                      'image',
