@@ -96,8 +96,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe, status = Recipe.objects.update_or_create(
             pk=instance.id,
             defaults={**validated_data})
-        TagRecipe.objects.filter(recipe=instance.id, ).delete()
-        IngredientRecipe.objects.filter(recipe=instance.id, ).delete()
+        instance.recipe_tags.all().delete()
+        instance.recipe_ingredients.all().delete()
         self.tags_create(tags, recipe)
         self.ingredients_create(ingredients, recipe)
         return recipe
@@ -126,7 +126,8 @@ class RecipeListSerializer(serializers.ModelSerializer):
         read_only=True,
     )
     tags = TagsSerializer(many=True,)
-    ingredients = IngredientsSerializer(many=True, read_only=True)
+    ingredients = IngredientsRecipeSerializer(many=True,
+                                              source='recipe_ingredients')
     is_favorited = serializers.SerializerMethodField(
         'get_is_favorited',
         read_only=True,
@@ -165,14 +166,6 @@ class RecipeListSerializer(serializers.ModelSerializer):
             return False
         return (user.recipes_list.filter(recipe=obj, is_in_shopping_cart=True)
                 .exists())
-
-    def to_representation(self, instance):
-        result = super(RecipeListSerializer, self).to_representation(instance)
-        for ingr in result['ingredients']:
-            ingr.update(IngredientRecipe.objects.values('amount').get(
-                recipe=instance,
-                ingredient_id=ingr['id']))
-        return result
 
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):

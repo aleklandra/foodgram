@@ -48,7 +48,7 @@ class Subscriptions(generics.ListAPIView):
     serializer_class = SubscribtionListSerializer
 
     def get_queryset(self):
-        users = UserSubscription.objects.filter(person_id=self.request.user)
+        users = self.request.user.user_person.all()
         data_user = []
         for user in users:
             data_user.append(user.sub_id)

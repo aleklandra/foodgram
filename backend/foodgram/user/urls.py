@@ -1,4 +1,5 @@
 from django.urls import include, path
+
 from user.views import Subscriptions, set_user_avatar, subscribe
 
 urlpatterns = [

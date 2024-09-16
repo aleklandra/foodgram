@@ -18,6 +18,7 @@ from rest_framework.permissions import (IsAuthenticated,
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
+from recipes.mixins import FilterModelMixin
 from recipes.models import (Ingredient, Recipe, Tag, UserRecipeLists)
 from recipes.permissions import IsAuthorOrAdminOrReadOnly
 from recipes.serializers import (DownloadShoppingCartSerializer,
@@ -27,52 +28,6 @@ from recipes.serializers import (DownloadShoppingCartSerializer,
 
 TEXT_ORIGIN_SIZE = 10.8
 FONT_SIZE = 16
-
-
-class FilterModelMixin(mixins.ListModelMixin):
-    def get_queryset(self):
-        queryset = Recipe.objects.all()
-        author = self.request.query_params.getlist('author')
-        if author != []:
-            queryset_author = Recipe.objects.filter(author__in=author)
-        else:
-            queryset_author = queryset
-        tags = self.request.query_params.getlist('tags')
-        if tags != []:
-            queryset_tag = Recipe.objects.filter(tags__slug__in=tags)
-        else:
-            queryset_tag = queryset
-
-        is_in_shopping_cart = self.request.query_params.get(
-            'is_in_shopping_cart')
-        if is_in_shopping_cart == '1':
-            queryset_shop = UserRecipeLists.objects.values('recipe').filter(
-                is_in_shopping_cart=True,
-                user=self.request.user,)
-        elif is_in_shopping_cart == '0':
-            queryset_shop = UserRecipeLists.objects.values('recipe').filter(
-                is_in_shopping_cart=True,
-                user=self.request.user,)
-            queryset_shop = queryset.exclude(id__in=queryset_shop)
-        else:
-            queryset_shop = queryset
-        is_favorited = self.request.query_params.get('is_favorited')
-        if is_favorited == '1':
-            queryset_fav = UserRecipeLists.objects.values('recipe').filter(
-                is_favorited=True,
-                user=self.request.user,)
-        elif is_favorited == '0':
-            queryset_fav = UserRecipeLists.objects.values('recipe').filter(
-                is_favorited=True,
-                user=self.request.user,)
-            queryset_fav = queryset.exclude(id__in=queryset_fav)
-        else:
-            queryset_fav = queryset
-
-        return (queryset.filter(id__in=queryset_shop)
-                        .filter(id__in=queryset_fav)
-                        .filter(id__in=queryset_tag)
-                        .filter(id__in=queryset_author))
 
 
 class IngredientsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,

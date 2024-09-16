@@ -1,11 +1,11 @@
-"""Настройка админки для управления ресурсами."""
-from adminka.forms import TagForm, UserChangeForm
 from django.contrib import admin, auth
 from django.db import models
 from django.forms import Textarea, TextInput
+
 from recipes.models import (Ingredient, IngredientRecipe, Recipe, Tag,
                             TagRecipe, UserRecipeLists)
 from user.models import User
+from adminka.forms import TagForm, UserChangeForm
 
 admin.site.empty_value_display = 'Не задано'
 
@@ -122,8 +122,7 @@ class RecipesAdmin(admin.ModelAdmin):
         return obj.author.username
 
     def favorite_count(self, obj):
-        return UserRecipeLists.objects.filter(recipe=obj,
-                                              is_favorited=True).count()
+        return obj.user_recipe.filter(is_favorited=True).count()
 
     author_username.short_description = 'Имя автора'
     favorite_count.short_description = 'В избранном'

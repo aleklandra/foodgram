@@ -1,4 +1,3 @@
-"""Сериализаторы для работы с пользователем."""
 import base64
 
 from django.conf import settings
@@ -14,10 +13,8 @@ User = get_user_model()
 
 
 class Base64ImageField(serializers.ImageField):
-    """Image conversion."""
 
     def to_internal_value(self, data):
-        """Image conversion class function."""
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
             ext = format.split('/')[-1]
@@ -89,7 +86,6 @@ class CustomUserSerializer(UserSerializer):
         return user
 
     def get_avatar_url(self, obj):
-        """Avatar function."""
         if obj.avatar:
             return obj.avatar.url
         return None
